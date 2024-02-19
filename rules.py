@@ -1,0 +1,147 @@
+from abc import ABC, abstractmethod
+import re
+
+from exceptions import RuleInvalidArgumentException, RuleValidationException
+
+
+class Rule(ABC):
+    @staticmethod
+    @abstractmethod
+    def validate(attrname: str, value: str, *args):
+        pass
+
+    @staticmethod
+    def raiseIfAttrNameEmpty(value: str):
+        if len(value.strip()) < 1:
+            raise RuleInvalidArgumentException("attribute can't be empty")
+
+
+class MinRule(Rule):
+    NAME = 'min'
+
+    @staticmethod
+    def validate(attrname: str, value: str, *args):
+        Rule.raiseIfAttrNameEmpty(attrname)
+
+        if len(args) == 0:
+            raise RuleInvalidArgumentException('min value should be given')
+
+        try:
+            length = int(args[0])
+        except ValueError:
+            raise RuleInvalidArgumentException('min value should be integer value')
+
+        if length < 1:
+            raise RuleInvalidArgumentException('min value should at least should be one')
+
+        if len(value) < length:
+            raise RuleValidationException(f'{attrname} at least should have {length} characters')
+
+
+class MaxRule(Rule):
+    NAME = 'max'
+
+    @staticmethod
+    def validate(attrname: str, value: str, *args):
+        Rule.raiseIfAttrNameEmpty(attrname)
+
+        if len(args) == 0:
+            raise RuleInvalidArgumentException('max value should be given')
+
+        try:
+            length = int(args[0])
+        except ValueError:
+            raise RuleInvalidArgumentException('max value should be integer value')
+
+        if length < 1:
+            raise RuleInvalidArgumentException('max value should at least should be one')
+
+        if len(value) > length:
+            raise RuleValidationException(f'{attrname} cannot have more than {length} characters')
+
+
+class NumericRule(Rule):
+    NAME = 'numeric'
+
+    @staticmethod
+    def validate(attrname: str, value: str, *args):
+        Rule.raiseIfAttrNameEmpty(attrname)
+
+        if re.search(r'^\d*$', value) is None:
+            raise RuleValidationException(f'{attrname} should contains all numeric values')
+
+
+class LowerCaseRule(Rule):
+    NAME = 'lowercase'
+
+    @staticmethod
+    def validate(attrname: str, value: str, *args):
+        Rule.raiseIfAttrNameEmpty(attrname)
+
+
+        if re.search(r'[a-z]{1,}', value) is None:
+            raise RuleValidationException(f'{attrname} should contains at least one lowercase character')
+
+
+class UpperCaseRule(Rule):
+    NAME = 'uppercase'
+
+    @staticmethod
+    def validate(attrname: str, value: str, *args):
+        Rule.raiseIfAttrNameEmpty(attrname)
+
+        if re.search(r'[A-Z]{1,}', value) is None:
+            raise RuleValidationException(f'{attrname} should contains only lowercase characters')
+
+
+class SpecialCharacterRule(Rule):
+    NAME = 'specialchars'
+
+    @staticmethod
+    def validate(attrname: str, value: str, *args):
+        Rule.raiseIfAttrNameEmpty(attrname)
+
+        if re.search(r'^[`!@#$%^&*_\-+<>/?\|:;]{1,}$', value) is None:
+            raise RuleValidationException(f'{attrname} should only contains special characters')
+
+
+class AlphaNumericRule(Rule):
+    NAME = 'alphanumeric'
+
+    @staticmethod
+    def validate(attrname: str, value: str, *args):
+        Rule.raiseIfAttrNameEmpty(attrname)
+
+        if re.search(r'^[a-zA-Z0-9]+$', value) is None:
+            raise RuleValidationException(f'{attrname} can only contains alphanumeric values')
+
+
+class PasswordRule:
+    """
+    rules
+    1. should more that 8 characters log (or given length)
+    2. also should have at least one Special Character
+    3. also should have at least one LowerCase Character
+    4. also should have at least one UpperCase Character
+    4. also should have at least one Numeric character
+    """
+    NAME = 'password'
+
+    @staticmethod
+    def validate(attrname: str, value: str, *args):
+        Rule.raiseIfAttrNameEmpty(attrname)
+
+        MinRule.validate(attrname, value, 8)
+
+        if re.search(r'(?=[`!@#$%^&*_\-+<>/?\|:;]{1,})', value) is None:
+            raise RuleValidationException(f'{attrname} should contains at least one special character')
+
+        if re.search(r'(?=[a-z]{1,})', value) is None:
+            raise RuleValidationException(f'{attrname} should contains at least one lowercase character')
+
+        if re.search(r'(?=[A-Z]{1,})', value) is None:
+            raise RuleValidationException(f'{attrname} should contains at least one uppercase character')
+
+        if re.search(r'(?=[0-9]{1,})', value) is None:
+            raise RuleValidationException(f'{attrname} should contains at least one numeric character')
+
