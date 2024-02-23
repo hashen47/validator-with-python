@@ -1,12 +1,11 @@
-import unittest
-
+from unittest import TestCase
 
 from ..exceptions import RuleInvalidArgumentException, RuleValidationException
 from ..rules import AlphaNumericRule, LowerCaseRule, MaxRule, MinRule, NumericRule, PasswordRule, Rule, SpecialCharacterRule, UpperCaseRule
 from ..tests import testcases
 
 
-class TestRules(unittest.TestCase):
+class TestRules(TestCase):
     def test_raise_if_attrname_empty_method(self):
         with self.assertRaises(RuleInvalidArgumentException):
             Rule.raiseIfAttrNameEmpty('')
