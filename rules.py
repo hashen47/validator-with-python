@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 import re
 
-from exceptions import RuleInvalidArgumentException, RuleValidationException
+from .exceptions import RuleInvalidArgumentException, RuleValidationException
 
 
 class Rule(ABC):
+    NAME = None
+
     @staticmethod
     @abstractmethod
     def validate(attrname: str, value: str, *args):
@@ -32,7 +34,7 @@ class MinRule(Rule):
             raise RuleInvalidArgumentException('min value should be integer value')
 
         if length < 1:
-            raise RuleInvalidArgumentException('min value should at least should be one')
+            raise RuleInvalidArgumentException('min value at least should be one')
 
         if len(value) < length:
             raise RuleValidationException(f'{attrname} at least should have {length} characters')
@@ -67,7 +69,7 @@ class NumericRule(Rule):
     def validate(attrname: str, value: str, *args):
         Rule.raiseIfAttrNameEmpty(attrname)
 
-        if re.search(r'^\d*$', value) is None:
+        if re.search(r'^[\d]{1,}$', value) is None:
             raise RuleValidationException(f'{attrname} should contains all numeric values')
 
 
@@ -116,22 +118,24 @@ class AlphaNumericRule(Rule):
             raise RuleValidationException(f'{attrname} can only contains alphanumeric values')
 
 
-class PasswordRule:
-    """
-    rules
-    1. should more that 8 characters log (or given length)
-    2. also should have at least one Special Character
-    3. also should have at least one LowerCase Character
-    4. also should have at least one UpperCase Character
-    4. also should have at least one Numeric character
-    """
+class PasswordRule(Rule):
     NAME = 'password'
 
     @staticmethod
     def validate(attrname: str, value: str, *args):
         Rule.raiseIfAttrNameEmpty(attrname)
 
-        MinRule.validate(attrname, value, 8)
+        if len(args) == 0:
+            passwordLength: int = 8
+        else:
+            try:
+                passwordLength = int(args[0])
+                if passwordLength < 4:
+                    raise ValueError('')
+            except ValueError:
+                raise RuleInvalidArgumentException(f'{attrname} length should be greater than or equal to 4 (default 8)')
+
+        MinRule.validate(attrname, value, passwordLength)
 
         if re.search(r'(?=[`!@#$%^&*_\-+<>/?\|:;]{1,})', value) is None:
             raise RuleValidationException(f'{attrname} should contains at least one special character')

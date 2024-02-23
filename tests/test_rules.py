@@ -1,17 +1,9 @@
 import unittest
 
-import sys
-import os
 
-
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
-
-
-from exceptions import RuleInvalidArgumentException, RuleValidationException
-from rules import AlphaNumericRule, LowerCaseRule, MaxRule, MinRule, NumericRule, PasswordRule, Rule, SpecialCharacterRule, UpperCaseRule
-import testcases
+from ..exceptions import RuleInvalidArgumentException, RuleValidationException
+from ..rules import AlphaNumericRule, LowerCaseRule, MaxRule, MinRule, NumericRule, PasswordRule, Rule, SpecialCharacterRule, UpperCaseRule
+from ..tests import testcases
 
 
 class TestRules(unittest.TestCase):
@@ -77,6 +69,9 @@ class TestRules(unittest.TestCase):
         with self.assertRaises(RuleInvalidArgumentException):
             MaxRule.validate('title', 'sdsfdfs', 0)
 
+        with self.assertRaises(RuleInvalidArgumentException):
+            MaxRule.validate('', 'sdsfdfs', 5)
+
 
     def test_numeric_rule(self):
         data_should_pass = testcases.numericValues
@@ -101,6 +96,9 @@ class TestRules(unittest.TestCase):
                 self.assertNotEqual(str(e), 'titleee should contains all numeric values')
                 self.assertNotEqual(str(e), 'titlse should contains all numeric values')
                 self.assertNotEqual(str(e), 'tit should contains all numeric values')
+
+        with self.assertRaises(RuleValidationException):
+            NumericRule.validate('title', '', 5)
 
 
     def test_lowercase_rule(self):
@@ -200,8 +198,17 @@ class TestRules(unittest.TestCase):
         for testcase in data_should_pass:
             self.assertEqual(PasswordRule.validate('password', testcase), None)
 
+        for testcase in testcases.lengthFiveWords:
+            self.assertEqual(PasswordRule.validate('password', testcase, 5), None)
+
         with self.assertRaises(RuleValidationException):
             for testcase in data_should_fail:
+                PasswordRule.validate('password', testcase)
+
+        with self.assertRaises(RuleValidationException):
+            for testcase in testcases.lengthFiveWords:
+                PasswordRule.validate('password', testcase, 6)
+                PasswordRule.validate('password', testcase, 7)
                 PasswordRule.validate('password', testcase)
 
         try:
@@ -234,7 +241,10 @@ class TestRules(unittest.TestCase):
         except RuleValidationException as e:
             self.assertEqual(str(e), "password should contains at least one numeric character")
 
+        with self.assertRaises(RuleInvalidArgumentException):
+            PasswordRule.validate('password', 'dfdf', 3)
 
-
-if __name__ == '__main__':
-    unittest.main()
+        try:
+            PasswordRule.validate('password', 'dfdf', 3)
+        except RuleInvalidArgumentException as e:
+            self.assertEqual(str(e), "password length should be greater than or equal to 4 (default 8)")
